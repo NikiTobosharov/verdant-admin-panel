@@ -7,7 +7,7 @@ import {
   Calendar, 
   FileText, 
   Users, 
-  Send,
+  Bell,
   User,
   LogOut,
   Menu,
@@ -32,9 +32,9 @@ const sidebarItems: SidebarItem[] = [
     path: '/dashboard/events',
   },
   {
-    name: 'Messaging',
-    icon: Send,
-    path: '/dashboard/messaging',
+    name: 'Notifications',
+    icon: Bell,
+    path: '/dashboard/notifications',
   },
   {
     name: 'Clients',

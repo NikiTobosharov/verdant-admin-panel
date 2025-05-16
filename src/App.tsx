@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Documents from "./pages/Documents";
 import Events from "./pages/Events";
-import Messaging from "./pages/Messaging";
+import Notifications from "./pages/Notifications";
 import Clients from "./pages/Clients";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
@@ -52,7 +52,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<DashboardRoute element={<Documents />} />} />
               <Route path="/dashboard/events" element={<DashboardRoute element={<Events />} />} />
-              <Route path="/dashboard/messaging" element={<DashboardRoute element={<Messaging />} />} />
+              <Route path="/dashboard/notifications" element={<DashboardRoute element={<Notifications />} />} />
               <Route path="/dashboard/clients" element={<DashboardRoute element={<Clients />} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

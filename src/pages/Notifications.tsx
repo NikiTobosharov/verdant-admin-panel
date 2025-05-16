@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 
-const Messaging = () => {
+const Notifications = () => {
   const { events, clients, sendEventToClients } = useData();
   const [searchParams] = useSearchParams();
   const eventIdFromUrl = searchParams.get('event');
@@ -88,7 +88,7 @@ const Messaging = () => {
               
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="message">Message</Label>
+                  <Label htmlFor="message">Notification Message</Label>
                   {selectedEvent && (
                     <span className="text-xs text-muted-foreground">
                       Status: {selectedEvent.sentToClients ? 'Already sent' : 'Not sent'}
@@ -98,7 +98,7 @@ const Messaging = () => {
                 <Textarea
                   id="message"
                   rows={10}
-                  placeholder="Enter your message to clients"
+                  placeholder="Enter your notification message to clients"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   className="resize-none"
@@ -107,7 +107,7 @@ const Messaging = () => {
               
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  This message will be sent to {activeClientsCount} active clients
+                  This notification will be sent to {activeClientsCount} active clients
                 </p>
                 
                 <Button
@@ -125,13 +125,13 @@ const Messaging = () => {
         
         <Card className="md:col-span-2">
           <CardContent className="pt-6">
-            <h3 className="text-lg font-medium mb-4">Tips for Effective Messages</h3>
+            <h3 className="text-lg font-medium mb-4">Tips for Effective Notifications</h3>
             <ul className="space-y-3 text-sm">
               <li className="flex gap-2">
                 <div className="h-5 w-5 rounded-full bg-admin-green flex items-center justify-center text-white text-xs">
                   1
                 </div>
-                <p>Keep your message clear and concise</p>
+                <p>Keep your notification clear and concise</p>
               </li>
               <li className="flex gap-2">
                 <div className="h-5 w-5 rounded-full bg-admin-green flex items-center justify-center text-white text-xs">
@@ -154,12 +154,12 @@ const Messaging = () => {
             </ul>
             
             <div className="mt-6 pt-6 border-t">
-              <h4 className="font-medium mb-2">Message Preview</h4>
+              <h4 className="font-medium mb-2">Notification Preview</h4>
               <div className="bg-gray-50 p-4 rounded-md text-sm max-h-[300px] overflow-y-auto">
                 {messageText ? (
                   <div className="whitespace-pre-wrap">{messageText}</div>
                 ) : (
-                  <p className="text-muted-foreground">Select an event to see the message preview</p>
+                  <p className="text-muted-foreground">Select an event to see the notification preview</p>
                 )}
               </div>
             </div>
@@ -170,4 +170,4 @@ const Messaging = () => {
   );
 };
 
-export default Messaging;
+export default Notifications;
