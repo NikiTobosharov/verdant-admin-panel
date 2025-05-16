@@ -34,6 +34,7 @@ type DataContextType = {
   clients: Client[];
   addDocument: (doc: Omit<Document, 'id' | 'createdAt'>) => void;
   addEvent: (event: Omit<Event, 'id' | 'sentToClients' | 'redacted'>) => void;
+  updateEvent: (eventId: string, eventData: Partial<Omit<Event, 'id' | 'sentToClients' | 'redacted'>>) => void;
   sendEventToClients: (eventId: string, message: string) => void;
   updateClientStatus: (clientId: string, status: 'active' | 'inactive') => void;
   toggleEventRedaction: (eventId: string) => void;
@@ -156,6 +157,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success("Event added successfully");
   };
 
+  const updateEvent = (eventId: string, eventData: Partial<Omit<Event, 'id' | 'sentToClients' | 'redacted'>>) => {
+    setEvents(prev => prev.map(event => 
+      event.id === eventId ? { ...event, ...eventData } : event
+    ));
+    
+    toast.success("Event updated successfully");
+  };
+
   const sendEventToClients = (eventId: string, message: string) => {
     setEvents(prev => prev.map(event => 
       event.id === eventId ? { ...event, sentToClients: true } : event
@@ -189,6 +198,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clients,
       addDocument,
       addEvent,
+      updateEvent,
       sendEventToClients,
       updateClientStatus,
       toggleEventRedaction
