@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { useData, Event } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +12,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import EventCard from '@/components/events/EventCard';
 
 const Events = () => {
-  const { events, addEvent } = useData();
+  const { events, addEvent, toggleEventRedaction } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [date, setDate] = useState<Date>();
   const [newEvent, setNewEvent] = useState<{
@@ -162,7 +162,11 @@ const Events = () => {
                 <h3 className="text-xl font-semibold">{monthYear}</h3>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {monthEvents.map((event) => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard 
+                      key={event.id} 
+                      event={event} 
+                      onToggleRedaction={toggleEventRedaction}
+                    />
                   ))}
                 </div>
               </div>
@@ -183,49 +187,6 @@ const Events = () => {
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
-
-const EventCard = ({ event }: { event: Event }) => {
-  const { title, date, description, sentToClients, id } = event;
-  
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Date</span>
-            <span>{format(new Date(date), 'MMMM dd, yyyy')}</span>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-1">Description</p>
-            <p className="text-sm">{description}</p>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="border-t bg-muted/20 flex justify-between items-center">
-        <div className="text-xs">
-          {sentToClients ? (
-            <span className="text-admin-green">Notification sent</span>
-          ) : (
-            <span className="text-gray-500">Not sent to clients</span>
-          )}
-        </div>
-        <Button
-          size="sm"
-          variant={sentToClients ? "outline" : "default"}
-          className={sentToClients ? "" : "bg-admin-green hover:bg-admin-green-dark"}
-          asChild
-        >
-          <a href={`/dashboard/messaging?event=${id}`}>
-            {sentToClients ? "Send Again" : "Send to Clients"}
-          </a>
-        </Button>
-      </CardFooter>
-    </Card>
   );
 };
 

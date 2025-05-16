@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext } from 'react';
 import { toast } from "sonner";
 
@@ -17,6 +16,7 @@ export type Event = {
   date: string;
   description: string;
   sentToClients: boolean;
+  redacted: boolean;
 };
 
 export type Client = {
@@ -33,9 +33,10 @@ type DataContextType = {
   events: Event[];
   clients: Client[];
   addDocument: (doc: Omit<Document, 'id' | 'createdAt'>) => void;
-  addEvent: (event: Omit<Event, 'id' | 'sentToClients'>) => void;
+  addEvent: (event: Omit<Event, 'id' | 'sentToClients' | 'redacted'>) => void;
   sendEventToClients: (eventId: string, message: string) => void;
   updateClientStatus: (clientId: string, status: 'active' | 'inactive') => void;
+  toggleEventRedaction: (eventId: string) => void;
 };
 
 // Mock data
@@ -69,21 +70,24 @@ const mockEvents: Event[] = [
     title: 'Product Launch',
     date: '2025-06-15',
     description: 'Launching our new product line',
-    sentToClients: false
+    sentToClients: false,
+    redacted: false
   },
   {
     id: '2',
     title: 'Quarterly Meeting',
     date: '2025-05-30',
     description: 'Review Q2 performance',
-    sentToClients: true
+    sentToClients: true,
+    redacted: false
   },
   {
     id: '3',
     title: 'Team Building',
     date: '2025-07-10',
     description: 'Annual team building event',
-    sentToClients: false
+    sentToClients: false,
+    redacted: false
   },
 ];
 
@@ -140,11 +144,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success("Document added successfully");
   };
 
-  const addEvent = (event: Omit<Event, 'id' | 'sentToClients'>) => {
+  const addEvent = (event: Omit<Event, 'id' | 'sentToClients' | 'redacted'>) => {
     const newEvent = {
       ...event,
       id: crypto.randomUUID(),
-      sentToClients: false
+      sentToClients: false,
+      redacted: false
     };
     
     setEvents(prev => [newEvent, ...prev]);
@@ -152,7 +157,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const sendEventToClients = (eventId: string, message: string) => {
-    // In a real app, this would call an API to send emails/notifications
     setEvents(prev => prev.map(event => 
       event.id === eventId ? { ...event, sentToClients: true } : event
     ));
@@ -168,6 +172,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success(`Client status updated to ${status}`);
   };
 
+  const toggleEventRedaction = (eventId: string) => {
+    setEvents(prev => prev.map(event => 
+      event.id === eventId ? { ...event, redacted: !event.redacted } : event
+    ));
+    
+    const event = events.find(e => e.id === eventId);
+    const newState = !event?.redacted;
+    toast.success(`Event ${newState ? 'redacted' : 'unredacted'} successfully`);
+  };
+
   return (
     <DataContext.Provider value={{
       documents,
@@ -176,7 +190,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addDocument,
       addEvent,
       sendEventToClients,
-      updateClientStatus
+      updateClientStatus,
+      toggleEventRedaction
     }}>
       {children}
     </DataContext.Provider>
