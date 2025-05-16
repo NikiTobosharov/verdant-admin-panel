@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,13 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+                // Custom admin panel colors
+                admin: {
+                    'green-light': '#4ade80',
+                    'green': '#22c55e',
+                    'green-dark': '#16a34a',
+                }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
