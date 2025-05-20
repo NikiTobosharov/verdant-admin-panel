@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useData, Document } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO, isSameDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const Documents = () => {
   const { documents, addDocument } = useData();
