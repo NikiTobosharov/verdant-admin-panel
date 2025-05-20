@@ -2,6 +2,7 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { 
   Calendar, 
@@ -11,7 +12,8 @@ import {
   User,
   LogOut,
   Menu,
-  X
+  X,
+  UserCog
 } from 'lucide-react';
 
 type SidebarItem = {
@@ -41,6 +43,11 @@ const sidebarItems: SidebarItem[] = [
     icon: Users,
     path: '/dashboard/clients',
   },
+  {
+    name: 'Admin',
+    icon: UserCog,
+    path: '/dashboard/admin',
+  },
 ];
 
 interface DashboardLayoutProps {
@@ -49,6 +56,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout } = useAuth();
+  const { nickname } = useData();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -89,7 +97,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <User className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-medium">{user?.name || 'User'}</p>
+              <p className="font-medium">{nickname || user?.name || 'User'}</p>
               <p className="text-sm text-white/70">{user?.role || 'Role'}</p>
             </div>
           </div>

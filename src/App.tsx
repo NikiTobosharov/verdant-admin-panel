@@ -12,6 +12,7 @@ import Documents from "./pages/Documents";
 import Events from "./pages/Events";
 import Notifications from "./pages/Notifications";
 import Clients from "./pages/Clients";
+import Admin from "./pages/Admin";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/dashboard/events" element={<DashboardRoute element={<Events />} />} />
               <Route path="/dashboard/notifications" element={<DashboardRoute element={<Notifications />} />} />
               <Route path="/dashboard/clients" element={<DashboardRoute element={<Clients />} />} />
+              <Route path="/dashboard/admin" element={<DashboardRoute element={<Admin />} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

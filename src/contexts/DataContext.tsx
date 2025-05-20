@@ -38,11 +38,21 @@ export type Notification = {
   eventId?: string;
 };
 
+export type PersonalNote = {
+  id: string;
+  title: string;
+  date?: string;
+  description: string;
+  createdAt: string;
+};
+
 type DataContextType = {
   documents: Document[];
   events: Event[];
   clients: Client[];
   notifications: Notification[];
+  personalNotes: PersonalNote[];
+  nickname: string;
   addDocument: (doc: Omit<Document, 'id' | 'createdAt'>) => void;
   addEvent: (event: Omit<Event, 'id' | 'sentToClients' | 'redacted'>) => void;
   updateEvent: (eventId: string, eventData: Partial<Omit<Event, 'id' | 'sentToClients' | 'redacted'>>) => void;
@@ -50,6 +60,8 @@ type DataContextType = {
   sendCustomNotification: (title: string, message: string) => void;
   updateClientStatus: (clientId: string, status: 'active' | 'inactive') => void;
   toggleEventRedaction: (eventId: string) => void;
+  addPersonalNote: (note: Omit<PersonalNote, 'id' | 'createdAt'>) => void;
+  updateNickname: (newNickname: string) => void;
 };
 
 // Mock data
@@ -159,6 +171,23 @@ const mockNotifications: Notification[] = [
   }
 ];
 
+const mockPersonalNotes: PersonalNote[] = [
+  {
+    id: '1',
+    title: 'Project Ideas',
+    date: '2025-06-01',
+    description: 'Brainstorm new project ideas for Q3',
+    createdAt: '2025-05-15'
+  },
+  {
+    id: '2',
+    title: 'Client Meeting Notes',
+    date: '2025-05-25',
+    description: 'Notes from the meeting with Acme Corp. Discussed new requirements.',
+    createdAt: '2025-05-10'
+  }
+];
+
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -166,6 +195,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [personalNotes, setPersonalNotes] = useState<PersonalNote[]>(mockPersonalNotes);
+  const [nickname, setNickname] = useState<string>('Admin');
 
   const addDocument = (doc: Omit<Document, 'id' | 'createdAt'>) => {
     const newDoc = {
@@ -252,19 +283,39 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success(`Event ${newState ? 'redacted' : 'unredacted'} successfully`);
   };
 
+  const addPersonalNote = (note: Omit<PersonalNote, 'id' | 'createdAt'>) => {
+    const newNote = {
+      ...note,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    
+    setPersonalNotes(prev => [newNote, ...prev]);
+    toast.success("Personal note added successfully");
+  };
+
+  const updateNickname = (newNickname: string) => {
+    setNickname(newNickname);
+    toast.success("Nickname updated successfully");
+  };
+
   return (
     <DataContext.Provider value={{
       documents,
       events,
       clients,
       notifications,
+      personalNotes,
+      nickname,
       addDocument,
       addEvent,
       updateEvent,
       sendEventToClients,
       sendCustomNotification,
       updateClientStatus,
-      toggleEventRedaction
+      toggleEventRedaction,
+      addPersonalNote,
+      updateNickname
     }}>
       {children}
     </DataContext.Provider>
