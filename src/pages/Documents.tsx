@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const Documents = () => {
   const { documents, addDocument } = useData();
@@ -15,10 +16,12 @@ const Documents = () => {
     name: string;
     deadline: string;
     importance: 'high' | 'medium' | 'low';
+    additionalInfo: string;
   }>({
     name: '',
     deadline: '',
     importance: 'medium',
+    additionalInfo: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,6 +31,7 @@ const Documents = () => {
       name: '',
       deadline: '',
       importance: 'medium',
+      additionalInfo: '',
     });
     setIsDialogOpen(false);
   };
@@ -88,6 +92,16 @@ const Documents = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="additionalInfo">Additional Information</Label>
+                <Textarea
+                  id="additionalInfo"
+                  placeholder="Enter any additional information about this document"
+                  value={newDoc.additionalInfo}
+                  onChange={(e) => setNewDoc({ ...newDoc, additionalInfo: e.target.value })}
+                  rows={4}
+                />
+              </div>
               <div className="pt-4 flex justify-end space-x-2">
                 <Button
                   type="button"
@@ -115,7 +129,7 @@ const Documents = () => {
 };
 
 const DocumentCard = ({ document }: { document: Document }) => {
-  const { name, deadline, importance, createdAt } = document;
+  const { name, deadline, importance, createdAt, additionalInfo } = document;
   
   // Calculate days remaining
   const today = new Date();
@@ -168,6 +182,12 @@ const DocumentCard = ({ document }: { document: Document }) => {
               {importance.charAt(0).toUpperCase() + importance.slice(1)}
             </span>
           </div>
+          {additionalInfo && (
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-muted-foreground text-xs mb-1">Additional Info:</p>
+              <p className="text-sm">{additionalInfo}</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

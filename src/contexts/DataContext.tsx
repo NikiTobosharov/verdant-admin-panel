@@ -8,6 +8,7 @@ export type Document = {
   deadline: string;
   importance: 'high' | 'medium' | 'low';
   createdAt: string;
+  additionalInfo?: string;
 };
 
 export type Event = {
@@ -58,14 +59,16 @@ const mockDocuments: Document[] = [
     name: 'Annual Report',
     deadline: '2025-06-30',
     importance: 'high',
-    createdAt: '2025-05-01'
+    createdAt: '2025-05-01',
+    additionalInfo: 'Contains financial projections for the next fiscal year.'
   },
   {
     id: '2',
     name: 'Marketing Plan',
     deadline: '2025-06-15',
     importance: 'medium',
-    createdAt: '2025-05-05'
+    createdAt: '2025-05-05',
+    additionalInfo: 'Focus on digital marketing strategies.'
   },
   {
     id: '3',
