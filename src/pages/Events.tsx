@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useData, Event } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EventCard from '@/components/events/EventCard';
@@ -27,6 +28,9 @@ const Events = () => {
     date: '',
     description: '',
   });
+
+  // For calendar view
+  const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
@@ -64,6 +68,14 @@ const Events = () => {
     }
     groupedEvents[monthYear].push(event);
   });
+
+  // Get events for the selected day
+  const eventsOnSelectedDay = selectedDay
+    ? events.filter(event => isSameDay(parseISO(event.date), selectedDay))
+    : [];
+
+  // Create array of dates with events for highlighting in the calendar
+  const datesWithEvents = events.map(event => parseISO(event.date));
 
   return (
     <div className="space-y-6">
@@ -179,9 +191,74 @@ const Events = () => {
         </TabsContent>
         
         <TabsContent value="calendar" className="pt-4">
-          <div className="admin-card">
-            <div className="text-center p-8 text-gray-500">
-              Calendar view will be implemented soon.
+          <div className="grid grid-cols-1 md:grid-cols-7 md:gap-6">
+            <div className="md:col-span-3 order-2 md:order-1 mt-6 md:mt-0">
+              <div className="space-y-4">
+                <div className="text-xl font-semibold">
+                  {selectedDay ? (
+                    <span>Events on {format(selectedDay, 'MMMM d, yyyy')}</span>
+                  ) : (
+                    <span>Select a date to view events</span>
+                  )}
+                </div>
+                
+                {eventsOnSelectedDay.length > 0 ? (
+                  <div className="space-y-4">
+                    {eventsOnSelectedDay.map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        onToggleRedaction={toggleEventRedaction}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 bg-white rounded-lg border">
+                    <p className="text-muted-foreground">No events scheduled for this date.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="md:col-span-4 order-1 md:order-2">
+              <Card>
+                <CardContent className="pt-6">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDay}
+                    onSelect={setSelectedDay}
+                    className="pointer-events-auto"
+                    modifiers={{
+                      hasEvent: datesWithEvents,
+                    }}
+                    modifiersStyles={{
+                      hasEvent: {
+                        fontWeight: 'bold',
+                        backgroundColor: '#e6f7e6',
+                      }
+                    }}
+                    components={{
+                      DayContent: ({ date, ...props }) => {
+                        const hasEvent = datesWithEvents.some((eventDate) => 
+                          isSameDay(date, eventDate)
+                        );
+                        return (
+                          <div 
+                            className={cn(
+                              "relative flex h-full w-full items-center justify-center",
+                              hasEvent && "bg-admin-green/10 rounded-full font-bold"
+                            )}
+                            {...props}
+                          >
+                            {date.getDate()}
+                            {hasEvent && <div className="w-1 h-1 bg-admin-green absolute bottom-1 rounded-full"></div>}
+                          </div>
+                        );
+                      },
+                    }}
+                  />
+                </CardContent>
+              </Card>
             </div>
           </div>
         </TabsContent>

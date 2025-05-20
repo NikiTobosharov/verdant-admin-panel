@@ -8,10 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parseISO, isSameDay } from 'date-fns';
 
 const Documents = () => {
   const { documents, addDocument } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
   const [newDoc, setNewDoc] = useState<{
     name: string;
     deadline: string;
@@ -35,6 +39,14 @@ const Documents = () => {
     });
     setIsDialogOpen(false);
   };
+
+  // Calculate documents on selected day
+  const documentsOnSelectedDay = selectedDay
+    ? documents.filter(doc => isSameDay(parseISO(doc.deadline), selectedDay))
+    : [];
+
+  // Get all deadline dates for highlighting in the calendar
+  const datesWithDeadlines = documents.map(doc => parseISO(doc.deadline));
 
   return (
     <div className="space-y-6">
@@ -119,11 +131,81 @@ const Documents = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {documents.map((doc) => (
-          <DocumentCard key={doc.id} document={doc} />
-        ))}
-      </div>
+      <Tabs defaultValue="list">
+        <TabsList>
+          <TabsTrigger value="list">List View</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="list" className="pt-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {documents.map((doc) => (
+              <DocumentCard key={doc.id} document={doc} />
+            ))}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="calendar" className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-7 md:gap-6">
+            <div className="md:col-span-3 order-2 md:order-1 mt-6 md:mt-0">
+              <div className="space-y-4">
+                <div className="text-xl font-semibold">
+                  {selectedDay ? (
+                    <span>Deadlines on {format(selectedDay, 'MMMM d, yyyy')}</span>
+                  ) : (
+                    <span>Select a date to view deadlines</span>
+                  )}
+                </div>
+                
+                {documentsOnSelectedDay.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-1">
+                    {documentsOnSelectedDay.map((doc) => (
+                      <DocumentCard key={doc.id} document={doc} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 bg-white rounded-lg border">
+                    <p className="text-muted-foreground">No document deadlines for this date.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="md:col-span-4 order-1 md:order-2">
+              <Card>
+                <CardContent className="pt-6">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDay}
+                    onSelect={setSelectedDay}
+                    className="pointer-events-auto"
+                    components={{
+                      DayContent: ({ date, ...props }) => {
+                        const hasDeadline = datesWithDeadlines.some((deadlineDate) => 
+                          isSameDay(date, deadlineDate)
+                        );
+                        
+                        return (
+                          <div 
+                            className={cn(
+                              "relative flex h-full w-full items-center justify-center",
+                              hasDeadline && "bg-blue-100 rounded-full font-bold"
+                            )}
+                            {...props}
+                          >
+                            {date.getDate()}
+                            {hasDeadline && <div className="w-1 h-1 bg-blue-500 absolute bottom-1 rounded-full"></div>}
+                          </div>
+                        );
+                      },
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
