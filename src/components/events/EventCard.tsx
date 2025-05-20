@@ -169,7 +169,7 @@ const EventCard = ({ event, onToggleRedaction }: EventCardProps) => {
           asChild
           disabled={redacted}
         >
-          <a href={`/dashboard/messaging?event=${id}`}>
+          <a href={`/dashboard/notifications?event=${id}`}>
             {sentToClients ? "Send Again" : "Send to Clients"}
           </a>
         </Button>

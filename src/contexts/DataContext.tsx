@@ -28,14 +28,25 @@ export type Client = {
   joinedDate: string;
 };
 
+export type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  sentAt: string;
+  type: 'event' | 'custom';
+  eventId?: string;
+};
+
 type DataContextType = {
   documents: Document[];
   events: Event[];
   clients: Client[];
+  notifications: Notification[];
   addDocument: (doc: Omit<Document, 'id' | 'createdAt'>) => void;
   addEvent: (event: Omit<Event, 'id' | 'sentToClients' | 'redacted'>) => void;
   updateEvent: (eventId: string, eventData: Partial<Omit<Event, 'id' | 'sentToClients' | 'redacted'>>) => void;
   sendEventToClients: (eventId: string, message: string) => void;
+  sendCustomNotification: (title: string, message: string) => void;
   updateClientStatus: (clientId: string, status: 'active' | 'inactive') => void;
   toggleEventRedaction: (eventId: string) => void;
 };
@@ -127,12 +138,31 @@ const mockClients: Client[] = [
   },
 ];
 
+const mockNotifications: Notification[] = [
+  {
+    id: '1',
+    title: 'Product Launch',
+    message: 'Dear Client,\n\nWe would like to inform you about our upcoming event: "Product Launch" scheduled for June 15, 2025.\n\nLaunching our new product line\n\nPlease let us know if you\'ll be able to attend.\n\nBest regards,\nAdmin Team',
+    sentAt: '2025-05-15',
+    type: 'event',
+    eventId: '1'
+  },
+  {
+    id: '2',
+    title: 'Important Updates',
+    message: 'Dear valued clients,\n\nWe have some important updates regarding our service hours during the upcoming holiday season.\n\nPlease check our website for details.\n\nBest regards,\nAdmin Team',
+    sentAt: '2025-05-10',
+    type: 'custom'
+  }
+];
+
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [clients, setClients] = useState<Client[]>(mockClients);
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
 
   const addDocument = (doc: Omit<Document, 'id' | 'createdAt'>) => {
     const newDoc = {
@@ -170,7 +200,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       event.id === eventId ? { ...event, sentToClients: true } : event
     ));
     
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      const newNotification: Notification = {
+        id: crypto.randomUUID(),
+        title: event.title,
+        message,
+        sentAt: new Date().toISOString().split('T')[0],
+        type: 'event',
+        eventId
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
+    }
+    
     toast.success(`Event notification sent to ${clients.filter(c => c.status === 'active').length} active clients`);
+  };
+
+  const sendCustomNotification = (title: string, message: string) => {
+    const newNotification: Notification = {
+      id: crypto.randomUUID(),
+      title,
+      message,
+      sentAt: new Date().toISOString().split('T')[0],
+      type: 'custom'
+    };
+    
+    setNotifications(prev => [newNotification, ...prev]);
+    
+    toast.success(`Custom notification "${title}" sent to ${clients.filter(c => c.status === 'active').length} active clients`);
   };
 
   const updateClientStatus = (clientId: string, status: 'active' | 'inactive') => {
@@ -196,10 +254,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       documents,
       events,
       clients,
+      notifications,
       addDocument,
       addEvent,
       updateEvent,
       sendEventToClients,
+      sendCustomNotification,
       updateClientStatus,
       toggleEventRedaction
     }}>
