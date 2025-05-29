@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +8,6 @@ import { DataProvider } from "./contexts/DataContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Documents from "./pages/Documents";
-import Events from "./pages/Events";
 import Notifications from "./pages/Notifications";
 import Clients from "./pages/Clients";
 import Admin from "./pages/Admin";
@@ -52,7 +50,6 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<DashboardRoute element={<Documents />} />} />
-              <Route path="/dashboard/events" element={<DashboardRoute element={<Events />} />} />
               <Route path="/dashboard/notifications" element={<DashboardRoute element={<Notifications />} />} />
               <Route path="/dashboard/clients" element={<DashboardRoute element={<Clients />} />} />
               <Route path="/dashboard/admin" element={<DashboardRoute element={<Admin />} />} />

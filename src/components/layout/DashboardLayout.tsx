@@ -1,11 +1,9 @@
-
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { 
-  Calendar, 
   FileText, 
   Users, 
   Bell,
@@ -27,11 +25,6 @@ const sidebarItems: SidebarItem[] = [
     name: 'Documents',
     icon: FileText,
     path: '/dashboard',
-  },
-  {
-    name: 'Events',
-    icon: Calendar,
-    path: '/dashboard/events',
   },
   {
     name: 'Notifications',
