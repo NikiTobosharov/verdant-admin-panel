@@ -73,8 +73,8 @@ const Clients = () => {
                   <th className="hidden lg:table-cell">Phone</th>
                   <th className="hidden md:table-cell">Joined</th>
                   <th>Status</th>
-                  <th>Permissions</th>
                   <th className="text-right">Actions</th>
+                  <th>Permissions</th>
                 </tr>
               </thead>
               <tbody>
@@ -144,28 +144,6 @@ const ClientRow = ({
           {client.status === 'active' ? 'Active' : 'Inactive'}
         </span>
       </td>
-      <td>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPermissionsBadgeStyle(client.permissions)}`}>
-                {client.permissions}
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="center">
-            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'super admin')}>
-              Super Admin
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'moderator')}>
-              Moderator
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'client')}>
-              Client
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </td>
       <td className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -178,6 +156,26 @@ const ClientRow = ({
               onStatusChange(client.id, client.status === 'active' ? 'inactive' : 'active')
             }>
               Mark as {client.status === 'active' ? 'Inactive' : 'Active'}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </td>
+      <td>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${getPermissionsBadgeStyle(client.permissions)}`}>
+              {client.permissions}
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center">
+            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'super admin')}>
+              Super Admin
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'moderator')}>
+              Moderator
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'client')}>
+              Client
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
