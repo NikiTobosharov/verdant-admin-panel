@@ -26,6 +26,7 @@ export type Client = {
   email: string;
   phone: string;
   status: 'active' | 'inactive';
+  permissions: 'super admin' | 'moderator' | 'client';
   joinedDate: string;
 };
 
@@ -61,6 +62,7 @@ type DataContextType = {
   sendEventToClients: (eventId: string, message: string) => void;
   sendCustomNotification: (title: string, message: string) => void;
   updateClientStatus: (clientId: string, status: 'active' | 'inactive') => void;
+  updateClientPermissions: (clientId: string, permissions: 'super admin' | 'moderator' | 'client') => void;
   toggleEventRedaction: (eventId: string) => void;
   addPersonalNote: (note: Omit<PersonalNote, 'id' | 'createdAt'>) => void;
   updateNickname: (newNickname: string) => void;
@@ -127,6 +129,7 @@ const mockClients: Client[] = [
     email: 'contact@acme.com',
     phone: '555-1234',
     status: 'active',
+    permissions: 'client',
     joinedDate: '2024-01-15'
   },
   {
@@ -135,6 +138,7 @@ const mockClients: Client[] = [
     email: 'info@widget.com',
     phone: '555-5678',
     status: 'active',
+    permissions: 'moderator',
     joinedDate: '2024-02-20'
   },
   {
@@ -143,6 +147,7 @@ const mockClients: Client[] = [
     email: 'hello@xyz.com',
     phone: '555-9012',
     status: 'inactive',
+    permissions: 'client',
     joinedDate: '2023-11-05'
   },
   {
@@ -151,6 +156,7 @@ const mockClients: Client[] = [
     email: 'support@techsolutions.com',
     phone: '555-3456',
     status: 'active',
+    permissions: 'super admin',
     joinedDate: '2024-03-10'
   },
 ];
@@ -288,6 +294,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success(`Client status updated to ${status}`);
   };
 
+  const updateClientPermissions = (clientId: string, permissions: 'super admin' | 'moderator' | 'client') => {
+    setClients(prev => prev.map(client => 
+      client.id === clientId ? { ...client, permissions } : client
+    ));
+    
+    toast.success(`Client permissions updated to ${permissions}`);
+  };
+
   const toggleEventRedaction = (eventId: string) => {
     setEvents(prev => prev.map(event => 
       event.id === eventId ? { ...event, redacted: !event.redacted } : event
@@ -330,6 +344,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sendEventToClients,
       sendCustomNotification,
       updateClientStatus,
+      updateClientPermissions,
       toggleEventRedaction,
       addPersonalNote,
       updateNickname

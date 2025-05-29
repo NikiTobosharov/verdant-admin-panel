@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { format } from 'date-fns';
 
 const Clients = () => {
-  const { clients, updateClientStatus } = useData();
+  const { clients, updateClientStatus, updateClientPermissions } = useData();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
@@ -73,6 +73,7 @@ const Clients = () => {
                   <th className="hidden lg:table-cell">Phone</th>
                   <th className="hidden md:table-cell">Joined</th>
                   <th>Status</th>
+                  <th>Permissions</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
@@ -82,12 +83,13 @@ const Clients = () => {
                     <ClientRow 
                       key={client.id} 
                       client={client} 
-                      onStatusChange={updateClientStatus} 
+                      onStatusChange={updateClientStatus}
+                      onPermissionsChange={updateClientPermissions}
                     />
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-muted-foreground">
+                    <td colSpan={7} className="py-6 text-center text-muted-foreground">
                       No clients found
                     </td>
                   </tr>
@@ -107,11 +109,26 @@ const Clients = () => {
 
 const ClientRow = ({ 
   client, 
-  onStatusChange 
+  onStatusChange,
+  onPermissionsChange
 }: { 
   client: Client; 
   onStatusChange: (id: string, status: 'active' | 'inactive') => void;
+  onPermissionsChange: (id: string, permissions: 'super admin' | 'moderator' | 'client') => void;
 }) => {
+  const getPermissionsBadgeStyle = (permissions: string) => {
+    switch (permissions) {
+      case 'super admin':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case 'moderator':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'client':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    }
+  };
+
   return (
     <tr>
       <td>
@@ -126,6 +143,28 @@ const ClientRow = ({
         <span className={`status-${client.status}`}>
           {client.status === 'active' ? 'Active' : 'Inactive'}
         </span>
+      </td>
+      <td>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPermissionsBadgeStyle(client.permissions)}`}>
+                {client.permissions}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center">
+            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'super admin')}>
+              Super Admin
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'moderator')}>
+              Moderator
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'client')}>
+              Client
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </td>
       <td className="text-right">
         <DropdownMenu>
