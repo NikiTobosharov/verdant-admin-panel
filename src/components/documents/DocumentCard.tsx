@@ -56,7 +56,7 @@ const DocumentCard = ({ document, onUpdate, onDelete, documentNumber }: Document
           ? 'bg-red-500' 
           : importance === 'medium' 
           ? 'bg-yellow-500' 
-          : 'bg-blue-500'
+          : 'bg-green-500'
       }`} />
       <CardHeader className="pb-2">
         <CardTitle className="text-lg pr-12">{name}</CardTitle>
