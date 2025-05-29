@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
-import { useData, Document } from '@/contexts/DataContext';
+import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
+import DocumentCard from '@/components/documents/DocumentCard';
 
 const Documents = () => {
-  const { documents, addDocument } = useData();
+  const { documents, addDocument, updateDocument, deleteDocument } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());
   const [newDoc, setNewDoc] = useState<{
@@ -39,6 +41,21 @@ const Documents = () => {
     });
     setIsDialogOpen(false);
   };
+
+  // Sort documents by deadline
+  const sortedDocuments = [...documents].sort((a, b) => {
+    return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+  });
+
+  // Group documents by month based on deadline
+  const groupedDocuments: Record<string, typeof documents> = {};
+  sortedDocuments.forEach((document, index) => {
+    const monthYear = format(new Date(document.deadline), 'MMMM yyyy');
+    if (!groupedDocuments[monthYear]) {
+      groupedDocuments[monthYear] = [];
+    }
+    groupedDocuments[monthYear].push(document);
+  });
 
   // Calculate documents on selected day
   const documentsOnSelectedDay = selectedDay
@@ -137,12 +154,33 @@ const Documents = () => {
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="list" className="pt-4">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {documents.map((doc) => (
-              <DocumentCard key={doc.id} document={doc} />
-            ))}
-          </div>
+        <TabsContent value="list" className="space-y-6 pt-4">
+          {Object.keys(groupedDocuments).length > 0 ? (
+            Object.entries(groupedDocuments).map(([monthYear, monthDocuments]) => (
+              <div key={monthYear} className="space-y-4">
+                <h3 className="text-xl font-semibold">{monthYear}</h3>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {monthDocuments.map((doc, index) => {
+                    // Calculate document number based on position in sorted array
+                    const documentNumber = sortedDocuments.findIndex(d => d.id === doc.id) + 1;
+                    return (
+                      <DocumentCard 
+                        key={doc.id} 
+                        document={doc} 
+                        onUpdate={updateDocument}
+                        onDelete={deleteDocument}
+                        documentNumber={documentNumber}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center p-8">
+              <p className="text-muted-foreground">No documents created yet.</p>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="calendar" className="pt-4">
@@ -159,9 +197,18 @@ const Documents = () => {
                 
                 {documentsOnSelectedDay.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-1">
-                    {documentsOnSelectedDay.map((doc) => (
-                      <DocumentCard key={doc.id} document={doc} />
-                    ))}
+                    {documentsOnSelectedDay.map((doc) => {
+                      const documentNumber = sortedDocuments.findIndex(d => d.id === doc.id) + 1;
+                      return (
+                        <DocumentCard 
+                          key={doc.id} 
+                          document={doc} 
+                          onUpdate={updateDocument}
+                          onDelete={deleteDocument}
+                          documentNumber={documentNumber}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center p-8 bg-white rounded-lg border">
@@ -207,72 +254,6 @@ const Documents = () => {
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
-
-const DocumentCard = ({ document }: { document: Document }) => {
-  const { name, deadline, importance, createdAt, additionalInfo } = document;
-  
-  // Calculate days remaining
-  const today = new Date();
-  const deadlineDate = new Date(deadline);
-  const daysRemaining = Math.ceil(
-    (deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  return (
-    <Card className="overflow-hidden">
-      <div className={`h-2 ${
-        importance === 'high' 
-          ? 'bg-red-500' 
-          : importance === 'medium' 
-          ? 'bg-yellow-500' 
-          : 'bg-blue-500'
-      }`} />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Created</span>
-            <span>{createdAt}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Deadline</span>
-            <span>{deadline}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Days Remaining</span>
-            <span className={`font-medium ${
-              daysRemaining < 0 
-                ? 'text-red-500' 
-                : daysRemaining < 7 
-                ? 'text-amber-500' 
-                : 'text-green-600'
-            }`}>
-              {daysRemaining < 0 
-                ? 'Overdue!' 
-                : daysRemaining === 0 
-                ? 'Due today!' 
-                : `${daysRemaining} days`}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Importance</span>
-            <span className={`status-${importance}`}>
-              {importance.charAt(0).toUpperCase() + importance.slice(1)}
-            </span>
-          </div>
-          {additionalInfo && (
-            <div className="pt-2 border-t border-gray-100">
-              <p className="text-muted-foreground text-xs mb-1">Additional Info:</p>
-              <p className="text-sm">{additionalInfo}</p>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 };
 

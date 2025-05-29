@@ -54,6 +54,8 @@ type DataContextType = {
   personalNotes: PersonalNote[];
   nickname: string;
   addDocument: (doc: Omit<Document, 'id' | 'createdAt'>) => void;
+  updateDocument: (documentId: string, documentData: Partial<Omit<Document, 'id' | 'createdAt'>>) => void;
+  deleteDocument: (documentId: string) => void;
   addEvent: (event: Omit<Event, 'id' | 'sentToClients' | 'redacted'>) => void;
   updateEvent: (eventId: string, eventData: Partial<Omit<Event, 'id' | 'sentToClients' | 'redacted'>>) => void;
   sendEventToClients: (eventId: string, message: string) => void;
@@ -209,6 +211,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success("Document added successfully");
   };
 
+  const updateDocument = (documentId: string, documentData: Partial<Omit<Document, 'id' | 'createdAt'>>) => {
+    setDocuments(prev => prev.map(document => 
+      document.id === documentId ? { ...document, ...documentData } : document
+    ));
+    
+    toast.success("Document updated successfully");
+  };
+
+  const deleteDocument = (documentId: string) => {
+    setDocuments(prev => prev.filter(document => document.id !== documentId));
+    toast.success("Document deleted successfully");
+  };
+
   const addEvent = (event: Omit<Event, 'id' | 'sentToClients' | 'redacted'>) => {
     const newEvent = {
       ...event,
@@ -308,6 +323,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       personalNotes,
       nickname,
       addDocument,
+      updateDocument,
+      deleteDocument,
       addEvent,
       updateEvent,
       sendEventToClients,
