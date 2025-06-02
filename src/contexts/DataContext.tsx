@@ -28,6 +28,13 @@ export type Client = {
   status: 'active' | 'inactive';
   permissions: 'super admin' | 'moderator' | 'client';
   joinedDate: string;
+  groupId?: string;
+};
+
+export type Group = {
+  id: string;
+  name: string;
+  createdAt: string;
 };
 
 export type Notification = {
@@ -51,6 +58,7 @@ type DataContextType = {
   documents: Document[];
   events: Event[];
   clients: Client[];
+  groups: Group[];
   notifications: Notification[];
   personalNotes: PersonalNote[];
   nickname: string;
@@ -63,6 +71,10 @@ type DataContextType = {
   sendCustomNotification: (title: string, message: string) => void;
   updateClientStatus: (clientId: string, status: 'active' | 'inactive') => void;
   updateClientPermissions: (clientId: string, permissions: 'super admin' | 'moderator' | 'client') => void;
+  updateClientGroup: (clientId: string, groupId: string | undefined) => void;
+  addGroup: (name: string) => void;
+  updateGroup: (groupId: string, name: string) => void;
+  deleteGroup: (groupId: string) => void;
   toggleEventRedaction: (eventId: string) => void;
   addPersonalNote: (note: Omit<PersonalNote, 'id' | 'createdAt'>) => void;
   updateNickname: (newNickname: string) => void;
@@ -130,7 +142,8 @@ const mockClients: Client[] = [
     phone: '555-1234',
     status: 'active',
     permissions: 'client',
-    joinedDate: '2024-01-15'
+    joinedDate: '2024-01-15',
+    groupId: '1'
   },
   {
     id: '2',
@@ -139,7 +152,8 @@ const mockClients: Client[] = [
     phone: '555-5678',
     status: 'active',
     permissions: 'moderator',
-    joinedDate: '2024-02-20'
+    joinedDate: '2024-02-20',
+    groupId: '2'
   },
   {
     id: '3',
@@ -148,7 +162,8 @@ const mockClients: Client[] = [
     phone: '555-9012',
     status: 'inactive',
     permissions: 'client',
-    joinedDate: '2023-11-05'
+    joinedDate: '2023-11-05',
+    groupId: '1'
   },
   {
     id: '4',
@@ -159,6 +174,24 @@ const mockClients: Client[] = [
     permissions: 'super admin',
     joinedDate: '2024-03-10'
   },
+];
+
+const mockGroups: Group[] = [
+  {
+    id: '1',
+    name: 'Premium Clients',
+    createdAt: '2024-01-01'
+  },
+  {
+    id: '2',
+    name: 'Standard Clients',
+    createdAt: '2024-01-01'
+  },
+  {
+    id: '3',
+    name: 'VIP Clients',
+    createdAt: '2024-02-01'
+  }
 ];
 
 const mockNotifications: Notification[] = [
@@ -202,6 +235,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [clients, setClients] = useState<Client[]>(mockClients);
+  const [groups, setGroups] = useState<Group[]>(mockGroups);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [personalNotes, setPersonalNotes] = useState<PersonalNote[]>(mockPersonalNotes);
   const [nickname, setNickname] = useState<string>('Admin');
@@ -302,6 +336,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success(`Client permissions updated to ${permissions}`);
   };
 
+  const updateClientGroup = (clientId: string, groupId: string | undefined) => {
+    setClients(prev => prev.map(client => 
+      client.id === clientId ? { ...client, groupId } : client
+    ));
+    
+    const groupName = groupId ? groups.find(g => g.id === groupId)?.name || 'Unknown' : 'No Group';
+    toast.success(`Client group updated to ${groupName}`);
+  };
+
+  const addGroup = (name: string) => {
+    const newGroup = {
+      id: crypto.randomUUID(),
+      name,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    
+    setGroups(prev => [newGroup, ...prev]);
+    toast.success("Group added successfully");
+  };
+
+  const updateGroup = (groupId: string, name: string) => {
+    setGroups(prev => prev.map(group => 
+      group.id === groupId ? { ...group, name } : group
+    ));
+    
+    toast.success("Group updated successfully");
+  };
+
+  const deleteGroup = (groupId: string) => {
+    // Remove group from clients first
+    setClients(prev => prev.map(client => 
+      client.groupId === groupId ? { ...client, groupId: undefined } : client
+    ));
+    
+    setGroups(prev => prev.filter(group => group.id !== groupId));
+    toast.success("Group deleted successfully");
+  };
+
   const toggleEventRedaction = (eventId: string) => {
     setEvents(prev => prev.map(event => 
       event.id === eventId ? { ...event, redacted: !event.redacted } : event
@@ -333,6 +405,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       documents,
       events,
       clients,
+      groups,
       notifications,
       personalNotes,
       nickname,
@@ -345,6 +418,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sendCustomNotification,
       updateClientStatus,
       updateClientPermissions,
+      updateClientGroup,
+      addGroup,
+      updateGroup,
+      deleteGroup,
       toggleEventRedaction,
       addPersonalNote,
       updateNickname

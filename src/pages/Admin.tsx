@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import {
@@ -15,12 +14,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserCog, FilePen } from 'lucide-react';
+import { UserCog, FilePen, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { format } from 'date-fns';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Admin = () => {
-  const { personalNotes, addPersonalNote, nickname, updateNickname } = useData();
+  const { personalNotes, addPersonalNote, nickname, updateNickname, clients, groups, updateClientGroup, addGroup, updateGroup, deleteGroup } = useData();
   const { user } = useAuth();
   const [newNickname, setNewNickname] = useState(nickname);
   const [newNote, setNewNote] = useState({
@@ -29,6 +49,9 @@ const Admin = () => {
     description: ''
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<{ id: string; name: string } | null>(null);
 
   const handleNicknameUpdate = () => {
     if (newNickname.trim()) {
@@ -45,6 +68,40 @@ const Admin = () => {
     }
   };
 
+  const handleAddGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newGroupName.trim()) {
+      addGroup(newGroupName.trim());
+      setNewGroupName('');
+      setIsGroupDialogOpen(false);
+    }
+  };
+
+  const handleEditGroup = (group: { id: string; name: string }) => {
+    setEditingGroup(group);
+    setNewGroupName(group.name);
+    setIsGroupDialogOpen(true);
+  };
+
+  const handleUpdateGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingGroup && newGroupName.trim()) {
+      updateGroup(editingGroup.id, newGroupName.trim());
+      setEditingGroup(null);
+      setNewGroupName('');
+      setIsGroupDialogOpen(false);
+    }
+  };
+
+  const handleDeleteGroup = (groupId: string) => {
+    deleteGroup(groupId);
+  };
+
+  const getGroupName = (groupId?: string) => {
+    if (!groupId) return 'No Group';
+    return groups.find(g => g.id === groupId)?.name || 'Unknown Group';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -52,12 +109,15 @@ const Admin = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <UserCog className="h-4 w-4" /> Profile
           </TabsTrigger>
           <TabsTrigger value="notes" className="flex items-center gap-2">
             <FilePen className="h-4 w-4" /> Personal Notes
+          </TabsTrigger>
+          <TabsTrigger value="groups" className="flex items-center gap-2">
+            <Users className="h-4 w-4" /> Groups
           </TabsTrigger>
         </TabsList>
 
@@ -191,6 +251,129 @@ const Admin = () => {
                     </Card>
                   ))
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="groups" className="mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Client Groups</CardTitle>
+                <CardDescription>
+                  Manage client groups and assign clients to groups
+                </CardDescription>
+              </div>
+              <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => { setEditingGroup(null); setNewGroupName(''); }}>
+                    Add Group
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{editingGroup ? 'Edit Group' : 'Add New Group'}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={editingGroup ? handleUpdateGroup : handleAddGroup} className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="groupName">Group Name</Label>
+                      <Input
+                        id="groupName"
+                        value={newGroupName}
+                        onChange={(e) => setNewGroupName(e.target.value)}
+                        placeholder="Enter group name"
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-2">
+                      <Button type="button" variant="outline" onClick={() => setIsGroupDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit">{editingGroup ? 'Update' : 'Add'} Group</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Available Groups</h3>
+                  <div className="grid gap-2">
+                    {groups.map((group) => (
+                      <div key={group.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <span className="font-medium">{group.name}</span>
+                          <span className="text-sm text-muted-foreground ml-2">
+                            ({clients.filter(c => c.groupId === group.id).length} clients)
+                          </span>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">Actions</Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleEditGroup(group)}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteGroup(group.id)}
+                              className="text-destructive"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Client Group Assignments</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Client Name</TableHead>
+                        <TableHead>Current Group</TableHead>
+                        <TableHead>Change Group</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {clients.map((client) => (
+                        <TableRow key={client.id}>
+                          <TableCell className="font-medium">{client.name}</TableCell>
+                          <TableCell>
+                            <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                              {getGroupName(client.groupId)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={client.groupId || 'none'}
+                              onValueChange={(value) => 
+                                updateClientGroup(client.id, value === 'none' ? undefined : value)
+                              }
+                            >
+                              <SelectTrigger className="w-48">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">No Group</SelectItem>
+                                {groups.map((group) => (
+                                  <SelectItem key={group.id} value={group.id}>
+                                    {group.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </CardContent>
           </Card>
