@@ -8,6 +8,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/groups': 'http://app:51821',
+      // Add other endpoints as needed
+    },
   },
   plugins: [
     react(),
