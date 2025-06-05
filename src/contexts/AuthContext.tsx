@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // If logging in as Super Admin, call backend /auth endpoint
     if (username === 'Super Admin' && password === 'V6Fe_3qSt_B2R0_zf') {
       try {
-        const res = await fetch('http://app:51821/auth', {
+        const res = await fetch('/app/auth', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

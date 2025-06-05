@@ -200,7 +200,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
       };
-      const res = await fetch('http://app:51821/groups', {
+      const res = await fetch('/app/groups', {
         headers,
       });
       if (!res.ok) throw new Error('Failed to fetch groups');
@@ -218,7 +218,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
       };
-      const res = await fetch('http://app:51821/my/users', {
+      const res = await fetch('/app/my/users', {
         method: 'GET',
         headers,
       });
@@ -366,7 +366,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (groupId !== undefined && groupId !== null) {
         body.group_id = Number(groupId);
       }
-      const res = await fetch('http://app:51821/groups/assign', {
+      const res = await fetch('/app/groups/assign', {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -393,7 +393,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       };
-      const res = await fetch('http://app:51821/groups', {
+      const res = await fetch('/app/groups', {
         method: 'POST',
         headers,
         body: JSON.stringify({ name }),
@@ -417,7 +417,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       };
-      const res = await fetch(`http://app:51821/groups/${groupId}`, {
+      const res = await fetch(`/app/groups/${groupId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ name }),
@@ -442,7 +442,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
       };
-      const res = await fetch(`http://app:51821/groups/${groupId}`, {
+      const res = await fetch(`/app/groups/${groupId}`, {
         method: 'DELETE',
         headers,
       });
