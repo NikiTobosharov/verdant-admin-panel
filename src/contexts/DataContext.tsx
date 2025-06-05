@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "sonner";
+import { useAuth } from './AuthContext';
 
 // Types
 export type Document = {
@@ -134,65 +135,7 @@ const mockEvents: Event[] = [
   },
 ];
 
-const mockClients: Client[] = [
-  {
-    id: '1',
-    name: 'Acme Corp',
-    email: 'contact@acme.com',
-    phone: '555-1234',
-    status: 'active',
-    permissions: 'client',
-    joinedDate: '2024-01-15',
-    groupId: '1'
-  },
-  {
-    id: '2',
-    name: 'Widget Inc',
-    email: 'info@widget.com',
-    phone: '555-5678',
-    status: 'active',
-    permissions: 'moderator',
-    joinedDate: '2024-02-20',
-    groupId: '2'
-  },
-  {
-    id: '3',
-    name: 'XYZ Industries',
-    email: 'hello@xyz.com',
-    phone: '555-9012',
-    status: 'inactive',
-    permissions: 'client',
-    joinedDate: '2023-11-05',
-    groupId: '1'
-  },
-  {
-    id: '4',
-    name: 'Tech Solutions',
-    email: 'support@techsolutions.com',
-    phone: '555-3456',
-    status: 'active',
-    permissions: 'super admin',
-    joinedDate: '2024-03-10'
-  },
-];
 
-const mockGroups: Group[] = [
-  {
-    id: '1',
-    name: 'Premium Clients',
-    createdAt: '2024-01-01'
-  },
-  {
-    id: '2',
-    name: 'Standard Clients',
-    createdAt: '2024-01-01'
-  },
-  {
-    id: '3',
-    name: 'VIP Clients',
-    createdAt: '2024-02-01'
-  }
-];
 
 const mockNotifications: Notification[] = [
   {
@@ -234,11 +177,83 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [events, setEvents] = useState<Event[]>(mockEvents);
-  const [clients, setClients] = useState<Client[]>(mockClients);
-  const [groups, setGroups] = useState<Group[]>(mockGroups);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [personalNotes, setPersonalNotes] = useState<PersonalNote[]>(mockPersonalNotes);
   const [nickname, setNickname] = useState<string>('Admin');
+
+  const { user } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+
+  // Fetch JWT token from localStorage or AuthContext if available
+  useEffect(() => {
+    // Replace this logic with your actual JWT retrieval logic
+    const jwt = localStorage.getItem('jwtToken');
+    if (jwt) setToken(jwt);
+  }, [user]);
+
+  // Fetch groups from backend
+  const fetchGroups = async () => {
+    try {
+      if (!token) return;
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetch('http://app:51821/groups', {
+        headers,
+      });
+      if (!res.ok) throw new Error('Failed to fetch groups');
+      const data = await res.json();
+      setGroups(data);
+    } catch (err) {
+      toast.error('Could not fetch groups');
+    }
+  };
+
+  // Fetch clients from backend
+  const fetchClients = async () => {
+    try {
+      if (!token) return;
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetch('http://app:51821/my/users', {
+        method: 'GET',
+        headers,
+      });
+      if (!res.ok) throw new Error('Failed to fetch clients');
+      const data = await res.json();
+      // Map backend users to Client type, normalizing joinedDate
+      const mappedClients: Client[] = data.map((user: any) => ({
+        id: user.id?.toString() ?? '',
+        name: user.name ?? '',
+        email: user.email ?? '',
+        phone: user.phone ?? '',
+        status: user.status ?? 'active',
+        permissions: user.privilege_level === 1
+          ? 'super admin'
+          : user.privilege_level === 2
+            ? 'moderator'
+            : 'client',
+        joinedDate: user.join_date
+          ? new Date(user.join_date).toISOString().split('T')[0]
+          : user.joinedDate || user.created_at || user.createdAt || new Date().toISOString().split('T')[0],
+        groupId: user.group_id ? user.group_id.toString() : undefined,
+      }));
+      setClients(mappedClients);
+    } catch (err) {
+      toast.error('Could not fetch clients');
+    }
+  };
+
+  // Fetch clients and groups on mount or when token changes
+  useEffect(() => {
+    if (token) {
+      fetchGroups();
+      fetchClients();
+    }
+  }, [token]);
 
   const addDocument = (doc: Omit<Document, 'id' | 'createdAt'>) => {
     const newDoc = {
@@ -336,42 +351,111 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success(`Client permissions updated to ${permissions}`);
   };
 
-  const updateClientGroup = (clientId: string, groupId: string | undefined) => {
-    setClients(prev => prev.map(client => 
-      client.id === clientId ? { ...client, groupId } : client
-    ));
-    
-    const groupName = groupId ? groups.find(g => g.id === groupId)?.name || 'Unknown' : 'No Group';
-    toast.success(`Client group updated to ${groupName}`);
+  const updateClientGroup = async (clientId: string, groupId: string | undefined) => {
+    try {
+      if (!token) {
+        toast.error("Not authenticated");
+        return;
+      }
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+      // Ensure groupId is a number or null (not undefined or string)
+      const body: Record<string, any> = { user_id: Number(clientId) };
+      if (groupId !== undefined && groupId !== null) {
+        body.group_id = Number(groupId);
+      }
+      const res = await fetch('http://app:51821/groups/assign', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error('Failed to update client group');
+      const updatedUser = await res.json();
+      setClients(prev =>
+        prev.map(client => client.id === clientId ? { ...client, groupId: updatedUser.group_id?.toString() } : client)
+      );
+      const groupName = groupId ? groups.find(g => g.id === groupId)?.name || 'Unknown' : 'No Group';
+      toast.success(`Client group updated to ${groupName}`);
+    } catch (err) {
+      toast.error("Could not update client group");
+    }
   };
 
-  const addGroup = (name: string) => {
-    const newGroup = {
-      id: crypto.randomUUID(),
-      name,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    
-    setGroups(prev => [newGroup, ...prev]);
-    toast.success("Group added successfully");
+  const addGroup = async (name: string) => {
+    try {
+      if (!token) {
+        toast.error("Not authenticated");
+        return;
+      }
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetch('http://app:51821/groups', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error('Failed to add group');
+      const newGroup = await res.json();
+      setGroups(prev => [newGroup, ...prev]);
+      toast.success("Group added successfully");
+    } catch (err) {
+      toast.error("Could not add group");
+    }
   };
 
-  const updateGroup = (groupId: string, name: string) => {
-    setGroups(prev => prev.map(group => 
-      group.id === groupId ? { ...group, name } : group
-    ));
-    
-    toast.success("Group updated successfully");
+  const updateGroup = async (groupId: string, name: string) => {
+    try {
+      if (!token) {
+        toast.error("Not authenticated");
+        return;
+      }
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetch(`http://app:51821/groups/${groupId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error('Failed to update group');
+      const updatedGroup = await res.json();
+      setGroups(prev =>
+        prev.map(group => group.id === groupId ? updatedGroup : group)
+      );
+      toast.success("Group updated successfully");
+    } catch (err) {
+      toast.error("Could not update group");
+    }
   };
 
-  const deleteGroup = (groupId: string) => {
-    // Remove group from clients first
-    setClients(prev => prev.map(client => 
-      client.groupId === groupId ? { ...client, groupId: undefined } : client
-    ));
-    
-    setGroups(prev => prev.filter(group => group.id !== groupId));
-    toast.success("Group deleted successfully");
+  const deleteGroup = async (groupId: string) => {
+    try {
+      if (!token) {
+        toast.error("Not authenticated");
+        return;
+      }
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+      };
+      const res = await fetch(`http://app:51821/groups/${groupId}`, {
+        method: 'DELETE',
+        headers,
+      });
+      if (!res.ok) throw new Error('Failed to delete group');
+      // Remove group from clients first
+      setClients(prev => prev.map(client =>
+        client.groupId === groupId ? { ...client, groupId: undefined } : client
+      ));
+      setGroups(prev => prev.filter(group => group.id !== groupId));
+      toast.success("Group deleted successfully");
+    } catch (err) {
+      toast.error("Could not delete group");
+    }
   };
 
   const toggleEventRedaction = (eventId: string) => {
@@ -424,7 +508,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       deleteGroup,
       toggleEventRedaction,
       addPersonalNote,
-      updateNickname
+      updateNickname,
+      // Optionally expose refreshGroups for manual refresh
+      refreshGroups: fetchGroups,
     }}>
       {children}
     </DataContext.Provider>
