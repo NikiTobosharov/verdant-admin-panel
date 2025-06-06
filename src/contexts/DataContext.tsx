@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "sonner";
-import { useAuth } from './AuthContext';
+import { useAuth, getCookie } from './AuthContext';
 
 // Types
 export type Document = {
@@ -184,18 +184,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [nickname, setNickname] = useState<string>('Admin');
 
   const { user } = useAuth();
-  const [token, setToken] = useState<string | null>(null);
-
-  // Fetch JWT token from localStorage or AuthContext if available
-  useEffect(() => {
-    // Replace this logic with your actual JWT retrieval logic
-    const jwt = localStorage.getItem('jwtToken');
-    if (jwt) setToken(jwt);
-  }, [user]);
 
   // Fetch groups from backend
   const fetchGroups = async () => {
     try {
+      const token = getCookie('jwtToken');
       if (!token) return;
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
@@ -214,6 +207,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch clients from backend
   const fetchClients = async () => {
     try {
+      const token = getCookie('jwtToken');
       if (!token) return;
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
@@ -247,13 +241,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Fetch clients and groups on mount or when token changes
+  // Fetch clients and groups on mount or when user changes
   useEffect(() => {
-    if (token) {
-      fetchGroups();
-      fetchClients();
-    }
-  }, [token]);
+    fetchGroups();
+    fetchClients();
+  }, [user]);
 
   const addDocument = (doc: Omit<Document, 'id' | 'createdAt'>) => {
     const newDoc = {
@@ -353,6 +345,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateClientGroup = async (clientId: string, groupId: string | undefined) => {
     try {
+      const token = getCookie('jwtToken');
       if (!token) {
         toast.error("Not authenticated");
         return;
@@ -385,6 +378,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addGroup = async (name: string) => {
     try {
+      const token = getCookie('jwtToken');
       if (!token) {
         toast.error("Not authenticated");
         return;
@@ -409,6 +403,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateGroup = async (groupId: string, name: string) => {
     try {
+      const token = getCookie('jwtToken');
       if (!token) {
         toast.error("Not authenticated");
         return;
@@ -435,6 +430,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteGroup = async (groupId: string) => {
     try {
+      const token = getCookie('jwtToken');
       if (!token) {
         toast.error("Not authenticated");
         return;

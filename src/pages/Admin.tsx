@@ -106,7 +106,10 @@ const Admin = () => {
         setGroupNameCache(prev => ({ ...prev, [groupId]: localGroup.name }));
         return;
       }
-      const token = localStorage.getItem('jwtToken');
+      const token = document.cookie.split('; ').reduce((r, v) => {
+        const parts = v.split('=');
+        return parts[0] === 'jwtToken' ? decodeURIComponent(parts[1]) : r
+      }, '');
       if (!token) return;
       const res = await fetch(`/app/groups`, {
         headers: { 'Authorization': `Bearer ${token}` }
