@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
 import {
   Card,
@@ -52,6 +52,7 @@ const Admin = () => {
   const [newGroupName, setNewGroupName] = useState('');
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<{ id: string; name: string } | null>(null);
+  const [groupNameCache, setGroupNameCache] = useState<Record<string, string>>({});
 
   const handleNicknameUpdate = () => {
     if (newNickname.trim()) {
@@ -97,9 +98,47 @@ const Admin = () => {
     deleteGroup(groupId);
   };
 
+  const fetchAndCacheGroupName = async (groupId: string) => {
+    if (!groupId || groupNameCache[groupId]) return;
+    try {
+      const localGroup = groups.find(g => g.id === groupId);
+      if (localGroup) {
+        setGroupNameCache(prev => ({ ...prev, [groupId]: localGroup.name }));
+        return;
+      }
+      const token = localStorage.getItem('jwtToken');
+      if (!token) return;
+      const res = await fetch(`/app/groups`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const groupList = await res.json();
+        const found = groupList.find((g: any) => g.id?.toString() === groupId);
+        if (found && found.name) {
+          setGroupNameCache(prev => ({ ...prev, [groupId]: found.name }));
+          return;
+        }
+      }
+      setGroupNameCache(prev => ({ ...prev, [groupId]: 'Unknown Group' }));
+    } catch {
+      setGroupNameCache(prev => ({ ...prev, [groupId]: 'Unknown Group' }));
+    }
+  };
+
+  // Updated getGroupName to use cache and trigger fetch if needed
   const getGroupName = (groupId?: string) => {
     if (!groupId) return 'No Group';
-    return groups.find(g => g.id === groupId)?.name || 'Unknown Group';
+    if (groupNameCache[groupId]) return groupNameCache[groupId];
+    const localGroup = groups.find(g => g.id === groupId);
+    if (localGroup) return localGroup.name;
+    fetchAndCacheGroupName(groupId);
+    return 'Loading...';
+  };
+
+  // Helper to get the groupId for Select value, always as string or 'none'
+  const getClientGroupIdValue = (client: any) => {
+    if (!client.groupId) return 'none';
+    return client.groupId.toString();
   };
 
   return (
@@ -351,13 +390,15 @@ const Admin = () => {
                           </TableCell>
                           <TableCell>
                             <Select
-                              value={client.groupId || 'none'}
+                              value={getClientGroupIdValue(client)}
                               onValueChange={(value) => 
                                 updateClientGroup(client.id, value === 'none' ? undefined : value)
                               }
                             >
                               <SelectTrigger className="w-48">
-                                <SelectValue />
+                                <SelectValue>
+                                  {getGroupName(client.groupId)}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="none">No Group</SelectItem>

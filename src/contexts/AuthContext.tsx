@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (phone: string, password: string): Promise<boolean> => {
     setIsLoading(true);
 
     try {
@@ -39,9 +39,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(`${username}:${password}`),
         },
-        body: JSON.stringify({ phone: username }),
+        body: JSON.stringify({ phone, password }),
       });
       if (!res.ok) {
         toast.error("Invalid credentials");
@@ -51,8 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await res.json();
       if (data.token) {
         const userObj = {
-          username,
-          name: username,
+          username: phone,
+          name: phone,
           role: data.role || 'user',
         };
         setUser(userObj);
