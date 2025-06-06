@@ -340,32 +340,38 @@ const Admin = () => {
                 <div>
                   <h3 className="text-lg font-medium mb-4">Available Groups</h3>
                   <div className="grid gap-2">
-                    {groups.map((group) => (
-                      <div key={group.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <span className="font-medium">{group.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            ({clients.filter(c => c.groupId === group.id).length} clients)
-                          </span>
+                    {groups.map((group) => {
+                      // Fix: groupId may be string or number, always compare as string
+                      const clientCount = clients.filter(
+                        c => c.groupId && c.groupId.toString() === group.id.toString()
+                      ).length;
+                      return (
+                        <div key={group.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <span className="font-medium">{group.name}</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              ({clientCount} {clientCount === 1 ? 'client' : 'clients'})
+                            </span>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">Actions</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => handleEditGroup(group)}>
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteGroup(group.id)}
+                                className="text-destructive"
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">Actions</Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => handleEditGroup(group)}>
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteGroup(group.id)}
-                              className="text-destructive"
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
