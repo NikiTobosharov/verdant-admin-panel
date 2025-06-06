@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
 import { useData, Client } from '@/contexts/DataContext';
+import { useAuth, getCookie } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,21 +8,48 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { format } from 'date-fns';
 
 const Clients = () => {
-  const { clients, updateClientStatus, updateClientPermissions } = useData();
+  const { clients, updateClientStatus } = useData();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  // Assign permissions using backend endpoint (only for super admin)
+  const assignPermissions = async (clientId: string, permissions: 'super admin' | 'moderator' | 'client') => {
+    setLoadingId(clientId);
+    try {
+      const token = getCookie('jwtToken');
+      if (!token) throw new Error('No token');
+      let privilege: string;
+      if (permissions === 'super admin') privilege = 'LEVEL_SUPER_ADMIN';
+      else if (permissions === 'moderator') privilege = 'LEVEL_MODERATOR';
+      else privilege = 'LEVEL_BASIC_USER';
+      const res = await fetch('/app/permissions/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_id: Number(clientId), privilege }),
+      });
+      if (!res.ok) throw new Error('Failed to update permissions');
+      window.location.reload();
+    } catch (err) {
+      alert('Could not update permissions');
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
   const filteredClients = clients.filter(client => {
-    const matchesSearch = 
+    const matchesSearch =
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = 
+    const matchesStatus =
       statusFilter === 'all' || client.status === statusFilter;
-    
     return matchesSearch && matchesStatus;
   });
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -31,13 +58,13 @@ const Clients = () => {
           <p className="text-muted-foreground">Manage your client list</p>
         </div>
       </div>
-      
+
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1">
-              <Input 
-                placeholder="Search clients..." 
+              <Input
+                placeholder="Search clients..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
@@ -63,7 +90,7 @@ const Clients = () => {
               </DropdownMenu>
             </div>
           </div>
-          
+
           <div className="rounded-md border overflow-hidden">
             <table className="admin-table">
               <thead>
@@ -80,11 +107,13 @@ const Clients = () => {
               <tbody>
                 {filteredClients.length > 0 ? (
                   filteredClients.map((client) => (
-                    <ClientRow 
-                      key={client.id} 
-                      client={client} 
+                    <ClientRow
+                      key={client.id}
+                      client={client}
                       onStatusChange={updateClientStatus}
-                      onPermissionsChange={updateClientPermissions}
+                      onPermissionsChange={assignPermissions}
+                      canChangePermissions={user?.role === 'super admin'}
+                      loading={loadingId === client.id}
                     />
                   ))
                 ) : (
@@ -97,7 +126,7 @@ const Clients = () => {
               </tbody>
             </table>
           </div>
-          
+
           <div className="mt-4 text-sm text-muted-foreground text-right">
             Total: {filteredClients.length} clients
           </div>
@@ -107,15 +136,33 @@ const Clients = () => {
   );
 };
 
-const ClientRow = ({ 
-  client, 
+const ClientRow = ({
+  client,
   onStatusChange,
-  onPermissionsChange
-}: { 
-  client: Client; 
+  onPermissionsChange,
+  canChangePermissions,
+  loading
+}: {
+  client: Client & { privilege_level?: number };
   onStatusChange: (id: string, status: 'active' | 'inactive') => void;
   onPermissionsChange: (id: string, permissions: 'super admin' | 'moderator' | 'client') => void;
+  canChangePermissions: boolean;
+  loading?: boolean;
 }) => {
+  // Map privilege_level to text
+  const getPermissionsText = (client: any) => {
+    if (typeof client.privilege_level !== 'undefined') {
+      if (client.privilege_level === 1) return 'super admin';
+      if (client.privilege_level === 2) return 'moderator';
+      if (client.privilege_level === 3) return 'client';
+    }
+    // fallback to permissions property if present
+    if (client.permissions) return client.permissions;
+    return 'client';
+  };
+
+  const permissionsText = getPermissionsText(client);
+
   const getPermissionsBadgeStyle = (permissions: string) => {
     switch (permissions) {
       case 'super admin':
@@ -163,8 +210,8 @@ const ClientRow = ({
       <td>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${getPermissionsBadgeStyle(client.permissions)}`}>
-              {client.permissions}
+            <span className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${getPermissionsBadgeStyle(permissionsText)}`}>
+              {permissionsText}
             </span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center">
