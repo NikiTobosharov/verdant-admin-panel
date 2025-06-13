@@ -1,59 +1,10 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "sonner";
-import { useAuth, getCookie } from './AuthContext';
-
-// Types
-export type Document = {
-  id: string;
-  name: string;
-  deadline: string;
-  importance: 'high' | 'medium' | 'low';
-  createdAt: string;
-  additionalInfo?: string;
-};
-
-export type Event = {
-  id: string;
-  title: string;
-  date: string;
-  description: string;
-  sentToClients: boolean;
-  redacted: boolean;
-};
-
-export type Client = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'active' | 'inactive';
-  permissions: 'super admin' | 'moderator' | 'client';
-  joinedDate: string;
-  groupId?: string;
-};
-
-export type Group = {
-  id: string;
-  name: string;
-  createdAt: string;
-};
-
-export type Notification = {
-  id: string;
-  title: string;
-  message: string;
-  sentAt: string;
-  type: 'event' | 'custom';
-  eventId?: string;
-};
-
-export type PersonalNote = {
-  id: string;
-  title: string;
-  date?: string;
-  description: string;
-  createdAt: string;
-};
+import { useAuth } from './AuthContext';
+import { Document, Event, Client, Group, Notification, PersonalNote } from '@/types';
+import { mockDocuments, mockEvents, mockNotifications, mockPersonalNotes } from '@/data/mockData';
+import { fetchGroups, fetchClients, updateClientGroupApi, addGroupApi, updateGroupApi, deleteGroupApi } from '@/services/apiService';
 
 type DataContextType = {
   documents: Document[];
@@ -82,97 +33,6 @@ type DataContextType = {
   refreshGroups: () => void;
 };
 
-// Mock data
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    name: 'Annual Report',
-    deadline: '2025-06-30',
-    importance: 'high',
-    createdAt: '2025-05-01',
-    additionalInfo: 'Contains financial projections for the next fiscal year.'
-  },
-  {
-    id: '2',
-    name: 'Marketing Plan',
-    deadline: '2025-06-15',
-    importance: 'medium',
-    createdAt: '2025-05-05',
-    additionalInfo: 'Focus on digital marketing strategies.'
-  },
-  {
-    id: '3',
-    name: 'Budget Review',
-    deadline: '2025-05-25',
-    importance: 'high',
-    createdAt: '2025-05-10'
-  },
-];
-
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Product Launch',
-    date: '2025-06-15',
-    description: 'Launching our new product line',
-    sentToClients: false,
-    redacted: false
-  },
-  {
-    id: '2',
-    title: 'Quarterly Meeting',
-    date: '2025-05-30',
-    description: 'Review Q2 performance',
-    sentToClients: true,
-    redacted: false
-  },
-  {
-    id: '3',
-    title: 'Team Building',
-    date: '2025-07-10',
-    description: 'Annual team building event',
-    sentToClients: false,
-    redacted: false
-  },
-];
-
-
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Product Launch',
-    message: 'Dear Client,\n\nWe would like to inform you about our upcoming event: "Product Launch" scheduled for June 15, 2025.\n\nLaunching our new product line\n\nPlease let us know if you\'ll be able to attend.\n\nBest regards,\nAdmin Team',
-    sentAt: '2025-05-15',
-    type: 'event',
-    eventId: '1'
-  },
-  {
-    id: '2',
-    title: 'Important Updates',
-    message: 'Dear valued clients,\n\nWe have some important updates regarding our service hours during the upcoming holiday season.\n\nPlease check our website for details.\n\nBest regards,\nAdmin Team',
-    sentAt: '2025-05-10',
-    type: 'custom'
-  }
-];
-
-const mockPersonalNotes: PersonalNote[] = [
-  {
-    id: '1',
-    title: 'Project Ideas',
-    date: '2025-06-01',
-    description: 'Brainstorm new project ideas for Q3',
-    createdAt: '2025-05-15'
-  },
-  {
-    id: '2',
-    title: 'Client Meeting Notes',
-    date: '2025-05-25',
-    description: 'Notes from the meeting with Acme Corp. Discussed new requirements.',
-    createdAt: '2025-05-10'
-  }
-];
-
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -187,65 +47,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user } = useAuth();
 
   // Fetch groups from backend
-  const fetchGroups = async () => {
-    try {
-      const token = getCookie('jwtToken');
-      if (!token) return;
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${token}`,
-      };
-      const res = await fetch('/app/groups', {
-        headers,
-      });
-      if (!res.ok) throw new Error('Failed to fetch groups');
-      const data = await res.json();
-      setGroups(data);
-    } catch (err) {
-      toast.error('Could not fetch groups');
-    }
+  const loadGroups = async () => {
+    const groupsData = await fetchGroups();
+    setGroups(groupsData);
   };
 
   // Fetch clients from backend
-  const fetchClients = async () => {
-    try {
-      const token = getCookie('jwtToken');
-      if (!token) return;
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${token}`,
-      };
-      const res = await fetch('/app/my/users', {
-        method: 'GET',
-        headers,
-      });
-      if (!res.ok) throw new Error('Failed to fetch clients');
-      const data = await res.json();
-      // Map backend users to Client type, normalizing joinedDate
-      const mappedClients: Client[] = data.map((user: any) => ({
-        id: user.id?.toString() ?? '',
-        name: user.name ?? '',
-        email: user.email ?? '',
-        phone: user.phone ?? '',
-        status: user.status ?? 'active',
-        permissions: user.privilege_level === 1
-          ? 'super admin'
-          : user.privilege_level === 2
-            ? 'moderator'
-            : 'client',
-        joinedDate: user.join_date
-          ? new Date(user.join_date).toISOString().split('T')[0]
-          : user.joinedDate || user.created_at || user.createdAt || new Date().toISOString().split('T')[0],
-        groupId: user.group_id ? user.group_id.toString() : undefined,
-      }));
-      setClients(mappedClients);
-    } catch (err) {
-      toast.error('Could not fetch clients');
-    }
+  const loadClients = async () => {
+    const clientsData = await fetchClients();
+    setClients(clientsData);
   };
 
   // Fetch clients and groups on mount or when user changes
   useEffect(() => {
-    fetchGroups();
-    fetchClients();
+    loadGroups();
+    loadClients();
   }, [user]);
 
   const addDocument = (doc: Omit<Document, 'id' | 'createdAt'>) => {
@@ -346,27 +162,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateClientGroup = async (clientId: string, groupId: string | undefined) => {
     try {
-      const token = getCookie('jwtToken');
-      if (!token) {
-        toast.error("Not authenticated");
-        return;
-      }
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      };
-      // Ensure groupId is a number or null (not undefined or string)
-      const body: Record<string, any> = { user_id: Number(clientId) };
-      if (groupId !== undefined && groupId !== null) {
-        body.group_id = Number(groupId);
-      }
-      const res = await fetch('/app/groups/assign', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error('Failed to update client group');
-      const updatedUser = await res.json();
+      const updatedUser = await updateClientGroupApi(clientId, groupId);
       setClients(prev =>
         prev.map(client => client.id === clientId ? { ...client, groupId: updatedUser.group_id?.toString() } : client)
       );
@@ -379,22 +175,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addGroup = async (name: string) => {
     try {
-      const token = getCookie('jwtToken');
-      if (!token) {
-        toast.error("Not authenticated");
-        return;
-      }
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      };
-      const res = await fetch('/app/groups', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error('Failed to add group');
-      const newGroup = await res.json();
+      const newGroup = await addGroupApi(name);
       setGroups(prev => [newGroup, ...prev]);
       toast.success("Group added successfully");
     } catch (err) {
@@ -404,22 +185,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateGroup = async (groupId: string, name: string) => {
     try {
-      const token = getCookie('jwtToken');
-      if (!token) {
-        toast.error("Not authenticated");
-        return;
-      }
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      };
-      const res = await fetch(`/app/groups/${groupId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error('Failed to update group');
-      const updatedGroup = await res.json();
+      const updatedGroup = await updateGroupApi(groupId, name);
       setGroups(prev =>
         prev.map(group => group.id === groupId ? updatedGroup : group)
       );
@@ -431,19 +197,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteGroup = async (groupId: string) => {
     try {
-      const token = getCookie('jwtToken');
-      if (!token) {
-        toast.error("Not authenticated");
-        return;
-      }
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${token}`,
-      };
-      const res = await fetch(`/app/groups/${groupId}`, {
-        method: 'DELETE',
-        headers,
-      });
-      if (!res.ok) throw new Error('Failed to delete group');
+      await deleteGroupApi(groupId);
       // Remove group from clients first
       setClients(prev => prev.map(client =>
         client.groupId === groupId ? { ...client, groupId: undefined } : client
@@ -506,8 +260,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toggleEventRedaction,
       addPersonalNote,
       updateNickname,
-      // Optionally expose refreshGroups for manual refresh
-      refreshGroups: fetchGroups,
+      refreshGroups: loadGroups,
     }}>
       {children}
     </DataContext.Provider>
