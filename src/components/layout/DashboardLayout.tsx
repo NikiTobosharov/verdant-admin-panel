@@ -1,3 +1,4 @@
+
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,11 +27,11 @@ const sidebarItems: SidebarItem[] = [
     icon: FileText,
     path: '/dashboard',
   },
-  {
-    name: 'Notifications',
-    icon: Bell,
-    path: '/dashboard/notifications',
-  },
+  // {
+  //   name: 'Notifications',
+  //   icon: Bell,
+  //   path: '/dashboard/notifications',
+  // },
   {
     name: 'Clients',
     icon: Users,
