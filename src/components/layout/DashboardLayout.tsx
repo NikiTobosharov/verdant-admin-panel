@@ -23,7 +23,7 @@ type SidebarItem = {
 
 const sidebarItems: SidebarItem[] = [
   {
-    name: 'Documents',
+    name: 'Events',
     icon: FileText,
     path: '/dashboard',
   },
