@@ -151,13 +151,13 @@ const Admin = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
+        <TabsList className="grid w-full max-w-lg grid-cols-2">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <UserCog className="h-4 w-4" /> Profile
           </TabsTrigger>
-          <TabsTrigger value="notes" className="flex items-center gap-2">
+          {/* <TabsTrigger value="notes" className="flex items-center gap-2">
             <FilePen className="h-4 w-4" /> Personal Notes
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="groups" className="flex items-center gap-2">
             <Users className="h-4 w-4" /> Groups
           </TabsTrigger>
@@ -211,7 +211,7 @@ const Admin = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notes" className="mt-4">
+        {/* <TabsContent value="notes" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -296,7 +296,7 @@ const Admin = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="groups" className="mt-4">
           <Card>

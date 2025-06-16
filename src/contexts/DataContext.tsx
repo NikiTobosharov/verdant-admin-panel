@@ -79,6 +79,7 @@ type DataContextType = {
   toggleEventRedaction: (eventId: string) => void;
   addPersonalNote: (note: Omit<PersonalNote, 'id' | 'createdAt'>) => void;
   updateNickname: (newNickname: string) => void;
+  refreshGroups: () => void;
 };
 
 // Mock data

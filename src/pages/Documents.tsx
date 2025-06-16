@@ -69,25 +69,25 @@ const Documents = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Documents</h1>
-          <p className="text-muted-foreground">Manage your documents and deadlines</p>
+          <h1 className="text-2xl font-bold">Events</h1>
+          <p className="text-muted-foreground">Manage your events and deadlines</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-admin-green hover:bg-admin-green-dark">
-              Add New Document
+              Add New Event
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Document</DialogTitle>
+              <DialogTitle>Create New Event</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Document Name</Label>
+                <Label htmlFor="name">Event Name</Label>
                 <Input
                   id="name"
-                  placeholder="Enter document name"
+                  placeholder="Enter event name"
                   value={newDoc.name}
                   onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
                   required
@@ -125,7 +125,7 @@ const Documents = () => {
                 <Label htmlFor="additionalInfo">Additional Information</Label>
                 <Textarea
                   id="additionalInfo"
-                  placeholder="Enter any additional information about this document"
+                  placeholder="Enter any additional information about this event"
                   value={newDoc.additionalInfo}
                   onChange={(e) => setNewDoc({ ...newDoc, additionalInfo: e.target.value })}
                   rows={4}
@@ -140,7 +140,7 @@ const Documents = () => {
                   Cancel
                 </Button>
                 <Button type="submit" className="bg-admin-green hover:bg-admin-green-dark">
-                  Create Document
+                  Create Event
                 </Button>
               </div>
             </form>
@@ -178,7 +178,7 @@ const Documents = () => {
             ))
           ) : (
             <div className="text-center p-8">
-              <p className="text-muted-foreground">No documents created yet.</p>
+              <p className="text-muted-foreground">No events created yet.</p>
             </div>
           )}
         </TabsContent>
@@ -212,7 +212,7 @@ const Documents = () => {
                   </div>
                 ) : (
                   <div className="text-center p-8 bg-white rounded-lg border">
-                    <p className="text-muted-foreground">No document deadlines for this date.</p>
+                    <p className="text-muted-foreground">No event deadlines for this date.</p>
                   </div>
                 )}
               </div>
