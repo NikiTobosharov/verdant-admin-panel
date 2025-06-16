@@ -208,24 +208,30 @@ const ClientRow = ({
         </DropdownMenu>
       </td>
       <td>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${getPermissionsBadgeStyle(permissionsText)}`}>
-              {permissionsText}
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="center">
-            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'super admin')}>
-              Super Admin
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'moderator')}>
-              Moderator
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'client')}>
-              Client
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {canChangePermissions ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${getPermissionsBadgeStyle(permissionsText)}`}>
+                {permissionsText}
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'super admin')}>
+                Super Admin
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'moderator')}>
+                Moderator
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onPermissionsChange(client.id, 'client')}>
+                Client
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPermissionsBadgeStyle(permissionsText)} opacity-60`}>
+            {permissionsText}
+          </span>
+        )}
       </td>
     </tr>
   );

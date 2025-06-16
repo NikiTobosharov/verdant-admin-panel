@@ -22,15 +22,15 @@ type SidebarItem = {
 
 const sidebarItems: SidebarItem[] = [
   {
-    name: 'Documents',
+    name: 'Events',
     icon: FileText,
     path: '/dashboard',
   },
-  {
-    name: 'Notifications',
-    icon: Bell,
-    path: '/dashboard/notifications',
-  },
+  // {
+  //   name: 'Notifications',
+  //   icon: Bell,
+  //   path: '/dashboard/notifications',
+  // },
   {
     name: 'Clients',
     icon: Users,
@@ -53,7 +53,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  
+
+  // Only show Admin tab for super admin
+  const filteredSidebarItems = sidebarItems.filter(
+    (item) => item.name !== 'Admin' || user?.role === 'super admin'
+  );
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -96,7 +101,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
           
           <nav className="space-y-1">
-            {sidebarItems.map((item) => (
+            {filteredSidebarItems.map((item) => (
               <button
                 key={item.name}
                 className={`admin-sidebar-item w-full ${
