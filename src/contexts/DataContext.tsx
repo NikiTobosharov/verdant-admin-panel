@@ -199,7 +199,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (!res.ok) throw new Error('Failed to fetch groups');
       const data = await res.json();
-      setGroups(data);
+      // Filter out soft-deleted groups (deleted column is truthy)
+      const filteredGroups = data.filter((group: any) => !group.deleted);
+      setGroups(filteredGroups);
     } catch (err) {
       toast.error('Could not fetch groups');
     }
